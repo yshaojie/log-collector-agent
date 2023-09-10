@@ -160,7 +160,7 @@ func removeFsyncFinalizer(finalizers []string, removed string) []string {
 	if finalizers == nil {
 		return []string{}
 	}
-	var result = []string{}
+	var result []string
 	for _, finalizer := range finalizers {
 		if finalizer == removed {
 			continue
