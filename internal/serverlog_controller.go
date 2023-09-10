@@ -3,15 +3,20 @@ package internal
 import (
 	"context"
 	"fmt"
+	apiv1 "github.com/yshaojie/log-collector/api/v1"
 	loginformersv1 "github.com/yshaojie/log-collector/pkg/informers/v1"
 	v12 "github.com/yshaojie/log-collector/pkg/listers/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"github.com/yshaojie/log-collector/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
+	"strings"
 	"time"
 )
 
@@ -20,18 +25,19 @@ const (
 )
 
 type ServerLogStructController struct {
-	client          clientset.Interface
+	client          kubernetes.Clientset
 	lister          v12.ServerLogLister
 	serverLogSynced cache.InformerSynced
 	workqueue       workqueue.RateLimitingInterface
 	logService      LogService
 }
 
-func NewServerLogStructController(options Options, informer loginformersv1.ServerLogInformer) (*ServerLogStructController, error) {
+func NewServerLogStructController(options Options, informer loginformersv1.ServerLogInformer, clientset kubernetes.Clientset) (*ServerLogStructController, error) {
 	queue := workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{
 		Name: "serverlog",
 	})
 	controller := &ServerLogStructController{
+		client:          clientset,
 		serverLogSynced: informer.Informer().HasSynced,
 		workqueue:       queue,
 		lister:          informer.Lister(),
@@ -116,9 +122,52 @@ func (c ServerLogStructController) syncServerLog(key string) error {
 	if serverLog == nil {
 		return nil
 	}
-	if serverLog.GetObjectMeta().GetDeletionTimestamp() != nil {
-		return c.logService.HandlerDelete(serverLog)
+	if serverLog.GetObjectMeta().GetDeletionTimestamp() != nil && !serverLog.GetObjectMeta().GetDeletionTimestamp().IsZero() {
+		err := c.logService.HandlerDelete(serverLog)
+		if err != nil {
+			return err
+		}
+		return c.syncFinalizers(serverLog)
 	} else {
 		return c.logService.HandlerUpdate(serverLog)
 	}
+}
+
+func (c ServerLogStructController) syncFinalizers(serverlog *apiv1.ServerLog) error {
+	//apiv1.GroupVersion.Group .
+	segments := []string{"apis", apiv1.GroupVersion.Group, apiv1.GroupVersion.Version}
+	var a1 []map[string]interface{}
+	m := make(map[string]interface{})
+	m["op"] = "replace"
+	m["path"] = "/metadata/finalizers"
+	m["value"] = removeFsyncFinalizer(serverlog.Finalizers, utils.FinalizerNameAgentHolder)
+	a1 = append(a1, m)
+	bytes, err := json.Marshal(a1)
+	println(string(bytes))
+	if err != nil {
+		return nil
+	}
+
+	result := c.client.AppsV1().RESTClient().Patch(types.JSONPatchType).
+		AbsPath(strings.Join(segments, "/")).
+		Namespace(serverlog.Namespace).
+		Resource("serverlogs").
+		Name(serverlog.Name).
+		Body(bytes).Do(context.TODO())
+	return result.Error()
+}
+
+func removeFsyncFinalizer(finalizers []string, removed string) []string {
+	if finalizers == nil {
+		return []string{}
+	}
+	var result = []string{}
+	for _, finalizer := range finalizers {
+		if finalizer == removed {
+			continue
+		}
+
+		result = append(result, finalizer)
+	}
+	return result
 }

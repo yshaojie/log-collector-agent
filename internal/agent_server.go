@@ -33,7 +33,7 @@ func (s LogCollectorAgentServer) RUN(options Options) {
 		})
 		informerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, 10*time.Minute, listOptions)
 		informer := loginformersv1.New(informerFactory, nil, "")
-		logStructController, _ := NewServerLogStructController(options, informer)
+		logStructController, _ := NewServerLogStructController(options, informer, *kubeClient)
 		informerFactory.Start(stopCh)
 		go logStructController.RUN(context.TODO(), 5)
 	})
