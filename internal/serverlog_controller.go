@@ -143,7 +143,6 @@ func (c ServerLogStructController) syncFinalizers(serverlog *apiv1.ServerLog) er
 	m["value"] = removeFsyncFinalizer(serverlog.Finalizers, utils.FinalizerNameAgentHolder)
 	a1 = append(a1, m)
 	bytes, err := json.Marshal(a1)
-	println(string(bytes))
 	if err != nil {
 		return nil
 	}
