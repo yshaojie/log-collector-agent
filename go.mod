@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/spf13/cobra v1.7.0
-	//github.com/yshaojie/log-collector v1.0.1
 	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v0.27.2
 )
@@ -42,7 +41,7 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/yshaojie/log-collector v1.0.2-0.20230909080228-8957d00978b8 // indirect
+	github.com/yshaojie/log-collector v1.0.4 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect

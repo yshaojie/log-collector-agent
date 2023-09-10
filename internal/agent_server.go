@@ -62,7 +62,7 @@ func (s LogCollectorAgentServer) serveHealthProbes(port int) error {
 	}
 
 	mux.HandleFunc("/healthz", func(writer http.ResponseWriter, request *http.Request) {
-
+		writer.Write([]byte("ok"))
 	})
 
 	mux.HandleFunc("/readyz", func(writer http.ResponseWriter, request *http.Request) {
