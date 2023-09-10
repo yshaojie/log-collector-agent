@@ -28,9 +28,12 @@ type ServerLogStructController struct {
 }
 
 func NewServerLogStructController(options Options, informer loginformersv1.ServerLogInformer) (*ServerLogStructController, error) {
+	queue := workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{
+		Name: "serverlog",
+	})
 	controller := &ServerLogStructController{
 		serverLogSynced: informer.Informer().HasSynced,
-		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "serverlog"),
+		workqueue:       queue,
 		lister:          informer.Lister(),
 	}
 	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
