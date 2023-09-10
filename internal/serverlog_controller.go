@@ -122,7 +122,7 @@ func (c ServerLogStructController) syncServerLog(key string) error {
 	if serverLog == nil {
 		return nil
 	}
-	if serverLog.GetObjectMeta().GetDeletionTimestamp() != nil && !serverLog.GetObjectMeta().GetDeletionTimestamp().IsZero() {
+	if !serverLog.GetObjectMeta().GetDeletionTimestamp().IsZero() {
 		err := c.logService.HandlerDelete(serverLog)
 		if err != nil {
 			return err
