@@ -8,12 +8,6 @@ namespace: log-collector-system
 # field above.
 namePrefix: log-collector-
 
-# Labels to add to all resources and selectors.
-#labels:
-#- includeSelectors: true
-#  pairs:
-#    someName: someValue
-
 resources:
 - manager.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1

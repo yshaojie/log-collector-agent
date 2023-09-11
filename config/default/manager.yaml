@@ -1,27 +1,21 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: agent
+  name: collector-agent
+  labels:
+    control-plane: collector-agent
 spec:
   selector:
     matchLabels:
-      name: agent
+      control-plane: collector-agent
   template:
     metadata:
       labels:
-        name: agent
+        control-plane: collector-agent
     spec:
-      tolerations:
-        # 这些容忍度设置是为了让该守护进程集在控制平面节点上运行
-        # 如果你不希望自己的控制平面节点运行 Pod，可以删除它们
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-        - key: node-role.kubernetes.io/master
-          operator: Exists
-          effect: NoSchedule
       containers:
-        - name: agent
+        - name: collector-agent
+          imagePullPolicy: IfNotPresent
           image: collector-agent:latest
       terminationGracePeriodSeconds: 30
       serviceAccountName: controller-manager
