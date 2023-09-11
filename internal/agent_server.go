@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -42,9 +43,10 @@ func (s LogCollectorAgentServer) RUN(options Options) {
 }
 
 func buildKubeClient() (*kubernetes.Clientset, error) {
-	kubeConfigDir := homedir.HomeDir() + "/.kube/config"
-	println("kubeconfig=", kubeConfigDir)
-
+	kubeConfigDir := ""
+	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
+		kubeConfigDir = homedir.HomeDir() + "/.kube/config"
+	}
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigDir)
 	if err != nil {
 		return nil, err

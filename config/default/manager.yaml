@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: collector-agent
+  name: agent
   labels:
     control-plane: collector-agent
 spec:
@@ -16,6 +16,6 @@ spec:
       containers:
         - name: collector-agent
           imagePullPolicy: IfNotPresent
-          image: collector-agent:latest
+          image: collector-agent
       terminationGracePeriodSeconds: 30
-      serviceAccountName: controller-manager
+      serviceAccountName: log-collector-controller-manager
