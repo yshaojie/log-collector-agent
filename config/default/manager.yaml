@@ -17,5 +17,10 @@ spec:
         - name: collector-agent
           imagePullPolicy: IfNotPresent
           image: collector-agent
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
       terminationGracePeriodSeconds: 30
       serviceAccountName: log-collector-controller-manager

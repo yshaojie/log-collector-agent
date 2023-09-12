@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
+	"os"
 	"strings"
 	"time"
 )
@@ -42,17 +43,28 @@ func NewServerLogStructController(options Options, informer loginformersv1.Serve
 		workqueue:       queue,
 		lister:          informer.Lister(),
 	}
-	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			controller.enqueue(obj)
+	eventHandler := cache.FilteringResourceEventHandler{
+		FilterFunc: func(obj interface{}) bool {
+			serverLog := obj.(*apiv1.ServerLog)
+			nodeName := os.Getenv("NODE_NAME")
+			klog.Info("NODE_NAME=", nodeName)
+			//true:需要处理
+			//只处理跟本节点匹配的ServerLog
+			return len(nodeName) > 0 && serverLog.Spec.NodeName == nodeName
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			controller.enqueue(newObj)
+		Handler: cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				controller.enqueue(obj)
+			},
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				controller.enqueue(newObj)
+			},
+			DeleteFunc: func(obj interface{}) {
+				controller.enqueue(obj)
+			},
 		},
-		DeleteFunc: func(obj interface{}) {
-			controller.enqueue(obj)
-		},
-	})
+	}
+	informer.Informer().AddEventHandler(eventHandler)
 	return controller, nil
 }
 
