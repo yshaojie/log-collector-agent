@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -28,20 +29,25 @@ const (
 type ServerLogStructController struct {
 	client          kubernetes.Clientset
 	lister          v12.ServerLogLister
+	factory         informers.SharedInformerFactory
 	serverLogSynced cache.InformerSynced
 	workqueue       workqueue.RateLimitingInterface
 	logService      LogService
+	stopCh          chan struct{}
 }
 
-func NewServerLogStructController(options Options, informer loginformersv1.ServerLogInformer, clientset kubernetes.Clientset) (*ServerLogStructController, error) {
+func NewServerLogStructController(options Options, stopCh chan struct{}, factory informers.SharedInformerFactory, clientset kubernetes.Clientset) (*ServerLogStructController, error) {
 	queue := workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{
 		Name: "serverlog",
 	})
+	informer := loginformersv1.New(factory, nil, "")
 	controller := &ServerLogStructController{
 		client:          clientset,
 		serverLogSynced: informer.Informer().HasSynced,
+		factory:         factory,
 		workqueue:       queue,
 		lister:          informer.Lister(),
+		stopCh:          stopCh,
 	}
 	eventHandler := cache.FilteringResourceEventHandler{
 		FilterFunc: func(obj interface{}) bool {
@@ -73,6 +79,9 @@ func (c ServerLogStructController) RUN(ctx context.Context, workers int) {
 	defer c.workqueue.ShutDown()
 	klog.Infof("Starting log-collector-controller controller")
 	defer klog.Infof("Shutting down log-collector-controller controller")
+
+	//启动SharedInformerFactory
+	c.factory.Start(c.stopCh)
 	if !cache.WaitForNamedCacheSync("log-collector-controller", ctx.Done(), c.serverLogSynced) {
 		return
 	}

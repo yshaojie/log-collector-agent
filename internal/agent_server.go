@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	loginformersv1 "github.com/yshaojie/log-collector/pkg/informers/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -33,10 +32,9 @@ func (s LogCollectorAgentServer) RUN(options Options) {
 		listOptions := informers.WithTweakListOptions(func(options *v1.ListOptions) {
 		})
 		informerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, 10*time.Minute, listOptions)
-		informer := loginformersv1.New(informerFactory, nil, "")
-		logStructController, _ := NewServerLogStructController(options, informer, *kubeClient)
+		logStructController, _ := NewServerLogStructController(options, stopCh, informerFactory, *kubeClient)
 		informerFactory.Start(stopCh)
-		go logStructController.RUN(context.TODO(), 5)
+		go logStructController.RUN(context.TODO(), 1)
 	})
 
 	<-stopCh
