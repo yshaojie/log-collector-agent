@@ -4,7 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"log-collector-agent/internal"
+	v2 "log-collector-agent/internal/v2"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -23,11 +23,13 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		server := internal.LogCollectorAgentServer{}
-		options := internal.Options{
-			Port: 4000,
-		}
-		server.RUN(options)
+		//server := internal.LogCollectorAgentServer{}
+		//options := internal.Options{
+		//	Port: 4000,
+		//}
+		//server.RUN(options)
+		server := v2.LogCollectorAgentServer{}
+		server.RUN()
 	},
 }
 

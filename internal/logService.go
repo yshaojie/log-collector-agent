@@ -1,10 +1,7 @@
 package internal
 
 import (
-	"errors"
-	"fmt"
 	apiv1 "github.com/yshaojie/log-collector/api/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 )
@@ -23,9 +20,6 @@ func (s LogService) HandlerDelete(log *apiv1.ServerLog) error {
 	if err != nil {
 		return err
 	}
-	if rand.Int()%2 == 0 {
-		return errors.New(fmt.Sprintf("%s handler error...", key))
-	}
 	klog.Infof("servet log %q is deleted...", key)
 	return nil
 }
@@ -34,9 +28,6 @@ func (s LogService) HandlerUpdate(log *apiv1.ServerLog) error {
 	key, err := cache.MetaNamespaceKeyFunc(log)
 	if err != nil {
 		return err
-	}
-	if rand.Int()%2 == 0 {
-		return errors.New(fmt.Sprintf("%s handler update error...", key))
 	}
 	klog.Infof("servet log %q is updated...", key)
 	return nil
