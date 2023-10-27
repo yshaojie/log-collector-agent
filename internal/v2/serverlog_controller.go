@@ -64,8 +64,9 @@ func (c *serverlogController) Reconcile(ctx context.Context, request reconcile.R
 	updated = updated || finalize.Updated
 	statusUpdated = statusUpdated || finalize.StatusUpdated
 	if serverLog.GetDeletionTimestamp().IsZero() {
-		update, err := c.HandleUpdate(serverLog)
+		update, statusUpdate, err := c.HandleUpdate(serverLog)
 		updated = update || updated
+		statusUpdated = statusUpdated || statusUpdate
 		errs = append(errs, err)
 	}
 
@@ -73,6 +74,7 @@ func (c *serverlogController) Reconcile(ctx context.Context, request reconcile.R
 		err = c.client.Update(context.TODO(), serverLog)
 		errs = append(errs, err)
 	}
+
 	if statusUpdated {
 		err = c.client.Status().Update(context.TODO(), serverLog)
 		errs = append(errs, err)
@@ -81,13 +83,13 @@ func (c *serverlogController) Reconcile(ctx context.Context, request reconcile.R
 	return reconcile.Result{}, kerrors.NewAggregate(errs)
 }
 
-func (c serverlogController) HandleUpdate(serverlog *v1.ServerLog) (bool, error) {
+func (c serverlogController) HandleUpdate(serverlog *v1.ServerLog) (bool, bool, error) {
 	err := c.logService.HandlerUpdate(serverlog)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 	serverlog.Status.Phase = v1.ServerLogRunning
-	return true, err
+	return false, true, err
 }
 
 func (c serverlogController) HandleDelete(serverlog *v1.ServerLog) (reconcile.Result, error) {
