@@ -74,6 +74,10 @@ docker-build: build ## Build docker image with the manager.
 
 	$(CONTAINER_TOOL) build -t ${IMG} .
 
+.PHONY: docker-build
+kind-load-image: ## load docker image to the kind.
+	kind load docker-image ${IMG}
+
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	$(CONTAINER_TOOL) push ${IMG}
