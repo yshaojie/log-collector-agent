@@ -63,6 +63,7 @@ func (s *LogCollectorAgentServer) RUN() {
 		logger.Error(err, " create controller fail. ")
 		os.Exit(1)
 	}
+
 	err = ctl.Watch(source.Kind(mgr.GetCache(), &v1.ServerLog{}),
 		&handler.EnqueueRequestForObject{},
 		predicate.NewPredicateFuncs(func(object client.Object) bool {
